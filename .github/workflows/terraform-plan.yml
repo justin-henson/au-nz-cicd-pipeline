@@ -1,0 +1,173 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-plan.yml'
+
+# Prevent concurrent plan operations on the same PR
+concurrency:
+  group: terraform-plan-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+env:
+  TF_VERSION: '1.7.0'
+  TFLINT_VERSION: 'v0.50.0'
+  AWS_REGION: 'ap-southeast-2'  # Sydney region for AU/NZ context
+
+jobs:
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write  # Required to post PR comments
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          # Wrapper outputs terraform outputs as JSON for easier parsing
+          terraform_wrapper: true
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive -diff
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: |
+          # Using local backend for demo - in production, configure S3 backend
+          # See backend.tf for S3+DynamoDB configuration example
+          terraform init
+        env:
+          # These secrets must be configured in GitHub repo settings
+          # Settings -> Secrets and variables -> Actions -> Secrets
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: ${{ env.TFLINT_VERSION }}
+
+      - name: Run TFLint
+        id: tflint
+        run: |
+          tflint --init
+          tflint --format compact
+        continue-on-error: true
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -no-color -out=tfplan -input=false
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        continue-on-error: true
+
+      - name: Parse Plan Output
+        id: plan-summary
+        if: steps.plan.outcome == 'success'
+        run: |
+          terraform show -no-color tfplan > plan_output.txt
+
+          # Extract summary statistics
+          ADDS=$(grep -c "will be created" plan_output.txt || echo "0")
+          CHANGES=$(grep -c "will be updated" plan_output.txt || echo "0")
+          DESTROYS=$(grep -c "will be destroyed" plan_output.txt || echo "0")
+
+          # Consolidate outputs into single redirect
+          {
+            echo "adds=${ADDS}"
+            echo "changes=${CHANGES}"
+            echo "destroys=${DESTROYS}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload Plan Artifact
+        if: steps.plan.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ github.event.pull_request.number }}
+          path: terraform/tfplan
+          retention-days: 5
+
+      - name: Post Plan Comment to PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: ${{ steps.plan.outputs.stdout }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `### Terraform Plan Results 🏗️
+
+            #### Terraform Format and Style 🖌️
+            \`${{ steps.fmt.outcome }}\`
+
+            #### Terraform Initialization ⚙️
+            \`${{ steps.init.outcome }}\`
+
+            #### Terraform Validation 🤖
+            \`${{ steps.validate.outcome }}\`
+
+            <details><summary>Validation Output</summary>
+
+            \`\`\`
+            ${{ steps.validate.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            #### TFLint 🔍
+            \`${{ steps.tflint.outcome }}\`
+
+            #### Terraform Plan 📖
+            \`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan Summary</summary>
+
+            **Changes:**
+            - ➕ Create: ${{ steps.plan-summary.outputs.adds }}
+            - 🔄 Update: ${{ steps.plan-summary.outputs.changes }}
+            - ❌ Destroy: ${{ steps.plan-summary.outputs.destroys }}
+
+            </details>
+
+            <details><summary>Show Full Plan</summary>
+
+            \`\`\`terraform
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+      - name: Plan Status Check
+        if: steps.plan.outcome == 'failure'
+        run: exit 1

@@ -1,0 +1,174 @@
+name: Drift Detection
+
+on:
+  # Run every Monday at 9 AM AEST (Sunday 11 PM UTC)
+  schedule:
+    - cron: '0 23 * * 0'
+
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+env:
+  TF_VERSION: '1.7.0'
+  AWS_REGION: 'ap-southeast-2'
+
+jobs:
+  detect-drift:
+    name: Detect Infrastructure Drift
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      issues: write  # Required to create drift detection issues
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Plan (Drift Check)
+        id: plan
+        run: |
+          # -detailed-exitcode returns:
+          # 0 = no changes (no drift)
+          # 1 = error
+          # 2 = successful plan with changes (drift detected)
+          terraform plan -detailed-exitcode -no-color -out=drift-plan 2>&1 | tee plan_output.txt
+          exit_code=$?
+          echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
+          exit "${exit_code}"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        continue-on-error: true
+
+      - name: Parse Drift Details
+        id: drift-details
+        if: steps.plan.outputs.exit_code == '2'
+        run: |
+          # Extract summary of drifted resources
+          terraform show -no-color drift-plan > drift_detail.txt
+
+          # Count changes
+          CHANGES=$(grep -c \
+            "will be updated in-place\|must be replaced\|will be created\|will be destroyed" \
+            drift_detail.txt || echo "0")
+          echo "change_count=${CHANGES}" >> "$GITHUB_OUTPUT"
+
+          # Truncate drift detail for notification (first 50 lines)
+          head -n 50 drift_detail.txt > drift_summary.txt
+
+      - name: Notify on Drift Detection
+        if: steps.plan.outputs.exit_code == '2'
+        run: |
+          ../scripts/notify-drift.sh
+        env:
+          DRIFT_DETECTED: 'true'
+          CHANGE_COUNT: ${{ steps.drift-details.outputs.change_count }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # Optional: Configure these secrets for Slack notifications
+          # SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Create GitHub Issue for Drift
+        if: steps.plan.outputs.exit_code == '2'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const driftSummary = fs.readFileSync('terraform/drift_summary.txt', 'utf8');
+            const changeCount = '${{ steps.drift-details.outputs.change_count }}';
+
+            const issueBody = `## Infrastructure Drift Detected 🚨
+
+            **Detection Date:** ${new Date().toISOString()}
+            **Change Count:** ${changeCount} resource(s) have drifted
+
+            ### What This Means
+            The actual infrastructure state doesn't match the Terraform configuration.
+            This could be due to:
+            - Manual changes made outside Terraform (via AWS Console, CLI, etc.)
+            - External automation or scripts modifying resources
+            - Resource modifications by AWS (auto-scaling, health checks, etc.)
+
+            ### Drift Summary
+            <details>
+            <summary>Click to view drift details (truncated)</summary>
+
+            \`\`\`terraform
+            ${driftSummary}
+            \`\`\`
+
+            </details>
+
+            ### Action Required
+            1. Review the drift details in the [workflow run]\
+            (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. Determine if the drift is expected or requires correction
+            3. If correction needed: Update Terraform config to match desired state, \
+            or revert manual changes
+            4. Run \`terraform apply\` via PR to reconcile drift
+
+            ### Related Documentation
+            - [Drift Detection Runbook](../docs/RUNBOOK-PIPELINE-FAILURE.md)
+            - [Pipeline Architecture](../docs/PIPELINE-ARCHITECTURE.md)
+
+            ---
+            *Automated drift detection runs weekly. Configure schedule in \
+            [\`.github/workflows/drift-detection.yml\`](.github/workflows/drift-detection.yml)*
+            `;
+
+            // Check if an open drift issue already exists
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'drift-detection',
+            });
+
+            if (existingIssues.data.length > 0) {
+              // Update existing issue
+              const issueNumber = existingIssues.data[0].number;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `### New Drift Detected: ${new Date().toISOString()}\n\n${issueBody}`,
+              });
+              console.log(`Updated existing drift issue #${issueNumber}`);
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Infrastructure Drift Detected - ${new Date().toISOString().split('T')[0]}`,
+                body: issueBody,
+                labels: ['drift-detection', 'infrastructure', 'needs-triage'],
+              });
+              console.log('Created new drift detection issue');
+            }
+
+      - name: No Drift Detected
+        if: steps.plan.outputs.exit_code == '0'
+        run: |
+          echo "✅ No infrastructure drift detected. Actual state matches Terraform configuration."
+
+      - name: Error During Drift Check
+        if: steps.plan.outputs.exit_code == '1'
+        run: |
+          echo "❌ Error occurred during drift detection. Review workflow logs."
+          exit 1

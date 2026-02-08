@@ -1,0 +1,134 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-apply.yml'
+
+env:
+  TF_VERSION: '1.7.0'
+  AWS_REGION: 'ap-southeast-2'
+
+jobs:
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    # Use GitHub Environments for manual approval gate
+    # To configure: Settings -> Environments -> New environment "production"
+    # Add required reviewers under "Deployment protection rules"
+    environment:
+      name: production
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    permissions:
+      contents: read
+      id-token: write  # Required for OIDC authentication (if using)
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Download Plan Artifact
+        id: download-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ github.event.number }}
+          path: terraform/
+        continue-on-error: true
+
+      - name: Determine Apply Strategy
+        id: strategy
+        run: |
+          if [ -f "tfplan" ]; then
+            echo "using_artifact=true" >> "$GITHUB_OUTPUT"
+            echo "Using cached plan artifact from PR"
+          else
+            echo "using_artifact=false" >> "$GITHUB_OUTPUT"
+            echo "Plan artifact not found or expired, will generate fresh plan"
+          fi
+
+      - name: Generate Fresh Plan (if artifact unavailable)
+        if: steps.strategy.outputs.using_artifact == 'false'
+        run: |
+          terraform plan -out=tfplan -input=false
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Apply
+        id: apply
+        run: |
+          terraform apply -auto-approve -input=false tfplan
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Capture Outputs
+        id: outputs
+        run: |
+          terraform output -json > outputs.json
+          cat outputs.json
+        continue-on-error: true
+
+      - name: Upload Outputs
+        if: steps.outputs.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-outputs-${{ github.sha }}
+          path: terraform/outputs.json
+          retention-days: 30
+
+      - name: Post Deployment Summary
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const applyStatus = '${{ steps.apply.outcome }}';
+            const strategyUsed = '${{ steps.strategy.outputs.using_artifact }}' === 'true'
+              ? 'Cached Plan Artifact'
+              : 'Fresh Plan';
+
+            const summary = `### Terraform Apply Results 🚀
+
+            **Status:** ${applyStatus === 'success' ? '✅ Success' : '❌ Failed'}
+            **Strategy:** ${strategyUsed}
+            **Commit:** \`${{ github.sha }}\`
+            **Actor:** @${{ github.actor }}
+            **Workflow Run:** [View Details]\
+            (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ${applyStatus === 'success'
+              ? '**Deployment to production environment complete.**'
+              : '**Deployment failed. Check workflow logs for details.**'}
+            `;
+
+            // Post as commit comment
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: summary
+            });
+
+      - name: Apply Status Check
+        if: steps.apply.outcome == 'failure'
+        run: exit 1
