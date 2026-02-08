@@ -169,7 +169,7 @@ In your forked repository:
 **5. Create a test PR**
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/au-nz-cicd-pipeline.git
+git clone https://github.com/justin-henson/au-nz-cicd-pipeline.git
 cd au-nz-cicd-pipeline
 
 # Create a test branch

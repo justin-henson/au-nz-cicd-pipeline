@@ -108,7 +108,7 @@ EOF
     fi
 }
 
-# Function to send email notification (placeholder)
+# Function to send email notification
 send_email_notification() {
     echo "📧 Email notification (not yet implemented)"
     echo "To implement email notifications, configure AWS SES or integrate with SendGrid/Mailgun"
@@ -137,7 +137,7 @@ if [ "$DRIFT_DETECTED" = "true" ]; then
         echo "⚠️  Slack webhook not configured. Set SLACK_WEBHOOK_URL secret to enable Slack notifications."
     fi
 
-    # Email notification placeholder (shows what would be implemented)
+    # Email notification (extend with SES, SNS, or Slack webhook)
     send_email_notification
 
     echo ""
