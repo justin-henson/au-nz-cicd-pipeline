@@ -2,7 +2,6 @@
 
 A production-grade CI/CD pipeline demonstrating automated infrastructure deployment, drift detection, and safe teardown practices using GitHub Actions and Terraform.
 
-**Built for:** AU/NZ DevOps/Cloud Engineer job applications
 **Portfolio by:** Justin Henson ([GitHub](https://github.com/justin-henson))
 
 ---
@@ -18,7 +17,7 @@ Most candidates can run `terraform apply` locally. This repository proves I can 
 - ✅ **Follows production patterns** - State management, concurrency controls, artifact handling
 - ✅ **Integrates with GitHub ecosystem** - PR comments, commit statuses, environment protection
 
-This is the pipeline that would deploy the infrastructure from my [au-nz-cloud-baseline-aws](https://github.com/justin-henson/au-nz-cloud-baseline-aws) repository, following the operational procedures in [au-nz-ops-runbooks](https://github.com/justin-henson/au-nz-ops-runbooks).
+This is the pipeline that would deploy the infrastructure from my [cloud-baseline-aws](https://github.com/justin-henson/cloud-baseline-aws) repository, following the operational procedures in [ops-runbooks](https://github.com/justin-henson/ops-runbooks).
 
 ---
 
@@ -84,7 +83,7 @@ See [PIPELINE-ARCHITECTURE.md](docs/PIPELINE-ARCHITECTURE.md) for detailed archi
 ## Repository Structure
 
 ```
-au-nz-cicd-pipeline/
+cicd-pipeline/
 ├── .github/workflows/
 │   ├── terraform-plan.yml        # PR validation and planning
 │   ├── terraform-apply.yml       # Post-merge deployment with approval
@@ -169,8 +168,8 @@ In your forked repository:
 **5. Create a test PR**
 
 ```bash
-git clone https://github.com/justin-henson/au-nz-cicd-pipeline.git
-cd au-nz-cicd-pipeline
+git clone https://github.com/justin-henson/cicd-pipeline.git
+cd cicd-pipeline
 
 # Create a test branch
 git checkout -b test-pipeline
@@ -221,7 +220,7 @@ Key architectural choices and their rationale:
 
 ### Why GitHub Actions?
 
-Native integration with GitHub, no external service required, widely adopted in AU/NZ tech companies. See [DECISION-LOG.md](docs/DECISION-LOG.md#decision-1-github-actions-vs-gitlab-ci-vs-jenkins) for full analysis.
+Native integration with GitHub, no external service required, widely adopted across the industry. See [DECISION-LOG.md](docs/DECISION-LOG.md#decision-1-github-actions-vs-gitlab-ci-vs-jenkins) for full analysis.
 
 ### Why Plan Artifacts with Fallback?
 
@@ -241,9 +240,9 @@ Self-contained in your AWS account, no external dependencies, industry standard 
 
 ## Connects To
 
-This pipeline integrates with my other AU/NZ portfolio repositories:
+This pipeline integrates with my other portfolio repositories:
 
-### [au-nz-cloud-baseline-aws](https://github.com/justin-henson/au-nz-cloud-baseline-aws)
+### [cloud-baseline-aws](https://github.com/justin-henson/cloud-baseline-aws)
 
 **Relationship:** This CI/CD pipeline would deploy the AWS foundation defined in the baseline repository.
 
@@ -254,7 +253,7 @@ This pipeline integrates with my other AU/NZ portfolio repositories:
 
 **Integration point:** Update `terraform/` directory to reference baseline modules.
 
-### [au-nz-ops-runbooks](https://github.com/justin-henson/au-nz-ops-runbooks)
+### [ops-runbooks](https://github.com/justin-henson/ops-runbooks)
 
 **Relationship:** When this pipeline fails, you'd follow the operational procedures in the runbooks repository.
 
@@ -294,7 +293,7 @@ This repository showcases:
 - Runbook creation for operational support
 - Architectural decision documentation
 
-**AU/NZ Market Alignment:**
+**Industry Alignment:**
 - Production-grade practices (not just toy examples)
 - Clear documentation for team collaboration
 - Operational thinking (drift detection, runbooks, incident response)
@@ -303,24 +302,7 @@ This repository showcases:
 
 ---
 
-## AU/NZ Context
 
-This repository is specifically designed for **Australia and New Zealand DevOps/Cloud Engineer roles**.
-
-**Why this matters to AU/NZ employers:**
-
-1. **Cloud maturity**: AU/NZ companies are increasingly adopting Infrastructure-as-Code and GitOps practices. This shows I'm aligned with modern practices.
-
-2. **Operational excellence**: AU/NZ engineering teams value operational thinking - not just building things, but maintaining them. The drift detection and runbooks demonstrate this mindset.
-
-3. **Team collaboration**: AU/NZ companies emphasize collaborative engineering. The PR workflows, approval gates, and documentation show I understand team-based development.
-
-4. **Cost consciousness**: AU/NZ companies often have tighter budgets than US counterparts. This pipeline uses cost-effective approaches (scheduled checks, minimal resources, AWS Sydney region).
-
-**Region-specific considerations:**
-- Default AWS region: `ap-southeast-2` (Sydney)
-- Drift detection scheduled for Monday 9 AM AEST
-- Documentation uses AU/NZ English spelling and terminology
 
 **Target roles:**
 - DevOps Engineer
@@ -329,7 +311,7 @@ This repository is specifically designed for **Australia and New Zealand DevOps/
 - Platform Engineer
 - Site Reliability Engineer (SRE)
 
-If you're hiring for one of these roles in AU/NZ, [let's talk](https://github.com/justin-henson)!
+If you're hiring for one of these roles, [let's talk](https://github.com/justin-henson)!
 
 ---
 
@@ -372,10 +354,10 @@ This repository is intended as a portfolio demonstration. Feel free to use it as
 **Justin Henson**
 GitHub: [@justin-henson](https://github.com/justin-henson)
 
-**Looking for DevOps/Cloud Engineers in AU/NZ?** I'm actively seeking opportunities in Australia and New Zealand. Check out my other repositories:
-- [au-nz-cloud-baseline-aws](https://github.com/justin-henson/au-nz-cloud-baseline-aws) - AWS foundation infrastructure
-- [au-nz-ops-runbooks](https://github.com/justin-henson/au-nz-ops-runbooks) - Operational procedures and troubleshooting guides
+**Looking for DevOps/Cloud Engineers?** Check out my other repositories:
+- [cloud-baseline-aws](https://github.com/justin-henson/cloud-baseline-aws) - AWS foundation infrastructure
+- [ops-runbooks](https://github.com/justin-henson/ops-runbooks) - Operational procedures and troubleshooting guides
 
 ---
 
-*Built with ☕ for AU/NZ DevOps opportunities*
+

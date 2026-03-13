@@ -1,12 +1,12 @@
 # Pipeline Failure Runbook
 
-This runbook provides troubleshooting steps for common pipeline failures in the `au-nz-cicd-pipeline` project.
+This runbook provides troubleshooting steps for common pipeline failures in the `cicd-pipeline` project.
 
 **Target audience:** DevOps engineers, SREs, on-call responders
 **Related documentation:**
 - [PIPELINE-ARCHITECTURE.md](./PIPELINE-ARCHITECTURE.md) - Pipeline design and flow
 - [DECISION-LOG.md](./DECISION-LOG.md) - Architectural decisions
-- [au-nz-ops-runbooks](https://github.com/justin-henson/au-nz-ops-runbooks) - General operational procedures
+- [ops-runbooks](https://github.com/justin-henson/ops-runbooks) - General operational procedures
 
 ---
 
@@ -566,9 +566,9 @@ When escalating, provide:
 
 ### Related Runbooks
 
-- [AWS IAM Troubleshooting](https://github.com/justin-henson/au-nz-ops-runbooks) - IAM and credential issues
-- [Terraform State Recovery](https://github.com/justin-henson/au-nz-ops-runbooks) - State corruption or loss
-- [Incident Response](https://github.com/justin-henson/au-nz-ops-runbooks) - General incident management
+- [AWS IAM Troubleshooting](https://github.com/justin-henson/ops-runbooks) - IAM and credential issues
+- [Terraform State Recovery](https://github.com/justin-henson/ops-runbooks) - State corruption or loss
+- [Incident Response](https://github.com/justin-henson/ops-runbooks) - General incident management
 
 ---
 

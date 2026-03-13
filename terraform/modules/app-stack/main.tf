@@ -117,7 +117,7 @@ resource "aws_instance" "app" {
                       </ul>
 
                       <h2>Repository</h2>
-                      <p>Check out the full pipeline at: <code>github.com/justin-henson/au-nz-cicd-pipeline</code></p>
+                      <p>Check out the full pipeline at: <code>github.com/justin-henson/cicd-pipeline</code></p>
                   </div>
               </body>
               </html>

@@ -1,6 +1,6 @@
 # Pipeline Architecture
 
-This document describes the CI/CD pipeline architecture and workflow for the `au-nz-cicd-pipeline` project.
+This document describes the CI/CD pipeline architecture and workflow for the `cicd-pipeline` project.
 
 ## Architecture Overview
 
@@ -299,5 +299,5 @@ What makes this pipeline production-grade:
 
 - [DECISION-LOG.md](./DECISION-LOG.md) - Architectural decisions and trade-offs
 - [RUNBOOK-PIPELINE-FAILURE.md](./RUNBOOK-PIPELINE-FAILURE.md) - Troubleshooting guide
-- [au-nz-cloud-baseline-aws](https://github.com/justin-henson/au-nz-cloud-baseline-aws) - AWS foundation this pipeline would deploy
-- [au-nz-ops-runbooks](https://github.com/justin-henson/au-nz-ops-runbooks) - Operational procedures
+- [cloud-baseline-aws](https://github.com/justin-henson/cloud-baseline-aws) - AWS foundation this pipeline would deploy
+- [ops-runbooks](https://github.com/justin-henson/ops-runbooks) - Operational procedures

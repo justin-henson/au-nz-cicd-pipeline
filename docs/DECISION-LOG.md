@@ -10,7 +10,7 @@ This document records key architectural and design decisions made for this CI/CD
 
 **Context:**
 
-For a portfolio project targeting AU/NZ DevOps roles, the CI/CD tool choice sends a signal about what you know and what environments you're ready for. GitHub Actions has become the de facto standard for GitHub-hosted projects and is widely used in modern tech companies, particularly in the AU/NZ market where cloud-native practices are prioritized.
+For a portfolio project targeting DevOps roles, the CI/CD tool choice sends a signal about what you know and what environments you're ready for. GitHub Actions has become the de facto standard for GitHub-hosted projects and is widely used in modern tech companies, particularly where cloud-native practices are prioritized.
 
 **Alternatives Considered:**
 
@@ -27,7 +27,7 @@ For a portfolio project targeting AU/NZ DevOps roles, the CI/CD tool choice send
 
 3. **CircleCI / Travis CI**
    - Solid hosted CI options
-   - Less common in AU/NZ market compared to GitHub Actions
+   - Less common compared to GitHub Actions
    - Additional service to manage and pay for
 
 **Trade-offs:**
@@ -39,7 +39,7 @@ For a portfolio project targeting AU/NZ DevOps roles, the CI/CD tool choice send
 - GitHub-native features: PR comments, commit statuses, issue creation
 - YAML-based configuration (similar to GitLab CI)
 - Large marketplace of reusable actions
-- Growing adoption in AU/NZ tech scene
+- Growing adoption in the industry
 
 ❌ **Cons of GitHub Actions:**
 - Less mature than Jenkins for complex enterprise workflows
@@ -53,7 +53,7 @@ For a portfolio project, GitHub Actions demonstrates:
 - Modern cloud-native practices
 - Ability to work with SaaS CI/CD platforms
 - Understanding of GitHub's ecosystem
-- Skills directly transferable to many AU/NZ companies already using GitHub
+- Skills directly transferable to many companies already using GitHub
 
 For production use, the choice depends on existing tooling, compliance requirements, and team expertise.
 

@@ -90,15 +90,15 @@ Terraform will perform the following actions:
           + "ManagedBy"   = "Terraform"
           + "Module"      = "app-stack"
           + "Name"        = "cicd-demo-dev-app"
-          + "Project"     = "au-nz-cicd-pipeline"
+          + "Project"     = "cicd-pipeline"
         }
       + tags_all                             = {
           + "Environment" = "dev"
           + "ManagedBy"   = "Terraform"
           + "Module"      = "app-stack"
           + "Name"        = "cicd-demo-dev-app"
-          + "Project"     = "au-nz-cicd-pipeline"
-          + "Repository"  = "github.com/justin-henson/au-nz-cicd-pipeline"
+          + "Project"     = "cicd-pipeline"
+          + "Repository"  = "github.com/justin-henson/cicd-pipeline"
         }
       + tenancy                              = (known after apply)
       + user_data                            = "c2eab2e4f3d3a4c4eb3a9c2b4f5e6d7c8b9a0b1c"
@@ -164,15 +164,15 @@ Terraform will perform the following actions:
           + "ManagedBy"   = "Terraform"
           + "Module"      = "app-stack"
           + "Name"        = "cicd-demo-dev-app-sg"
-          + "Project"     = "au-nz-cicd-pipeline"
+          + "Project"     = "cicd-pipeline"
         }
       + tags_all               = {
           + "Environment" = "dev"
           + "ManagedBy"   = "Terraform"
           + "Module"      = "app-stack"
           + "Name"        = "cicd-demo-dev-app-sg"
-          + "Project"     = "au-nz-cicd-pipeline"
-          + "Repository"  = "github.com/justin-henson/au-nz-cicd-pipeline"
+          + "Project"     = "cicd-pipeline"
+          + "Repository"  = "github.com/justin-henson/cicd-pipeline"
         }
       + vpc_id                 = (known after apply)
     }

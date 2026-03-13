@@ -1,5 +1,5 @@
 variable "aws_region" {
-  description = "AWS region for resource deployment. Defaulting to Sydney for AU/NZ context."
+  description = "AWS region for resource deployment. AWS region for resource deployment."
   type        = string
   default     = "ap-southeast-2"
 }
